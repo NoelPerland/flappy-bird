@@ -2,6 +2,8 @@ import {
   Canvas,
   useImage,
   Image as SkiaImage,
+  Group,
+  rotate,
 } from "@shopify/react-native-skia";
 import { useWindowDimensions, View } from "react-native";
 import {
@@ -11,6 +13,9 @@ import {
   withSequence,
   withRepeat,
   useFrameCallback,
+  interpolate,
+  useDerivedValue,
+  Extrapolation,
 } from "react-native-reanimated";
 import { useEffect } from "react";
 import {
@@ -19,7 +24,8 @@ import {
   Gesture,
 } from "react-native-gesture-handler";
 
-const GRAVITY = 600; // pixels per frame
+const GRAVITY = 1000; // pixels per frame
+const JUMP_FORCE = -500;
 
 const App = () => {
   const { width, height } = useWindowDimensions();
@@ -32,8 +38,23 @@ const App = () => {
 
   const x = useSharedValue(width);
 
-  const birdY = useSharedValue(0);
-  const birdYVelocity = useSharedValue(100);
+  const birdY = useSharedValue(height / 3);
+  const birdYVelocity = useSharedValue(0);
+  const birdTransform = useDerivedValue(() => {
+    return [
+      {
+        rotate: interpolate(
+          birdYVelocity.value,
+          [-500, 500],
+          [-0.5, 0.5],
+          Extrapolation.CLAMP
+        ),
+      },
+    ];
+  });
+  const birdOrigin = useDerivedValue(() => {
+    return { x: width / 4 + 26, y: birdY.value + 20 };
+  });
 
   useFrameCallback(({ timeSincePreviousFrame: dt }) => {
     if (!dt) {
@@ -54,7 +75,7 @@ const App = () => {
   }, []);
 
   const gesture = Gesture.Tap().onStart(() => {
-    birdYVelocity.value = -300;
+    birdYVelocity.value = JUMP_FORCE;
   });
 
   const pipeOffest = 0;
@@ -96,7 +117,15 @@ const App = () => {
             />
 
             {/* Bird */}
-            <SkiaImage image={bird} y={birdY} x={100} width={48} height={36} />
+            <Group transform={birdTransform} origin={birdOrigin}>
+              <SkiaImage
+                image={bird}
+                y={birdY}
+                x={100}
+                width={52}
+                height={40}
+              />
+            </Group>
           </Canvas>
         </View>
       </GestureDetector>
