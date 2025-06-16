@@ -32,7 +32,7 @@ import {
 
 const GRAVITY = 1000;
 const JUMP_FORCE = -500;
-const PIPE_GAP = 250;
+const PIPE_GAP = 250; //FREE CHEATS
 const pipeWidth = 106;
 const pipeHeight = 640;
 
@@ -56,6 +56,7 @@ const App = () => {
   const pipeOffset = useSharedValue(0);
   const birdPos = { x: width / 4 };
 
+  //SCOREBOARD
   const loadHighScore = async () => {
     try {
       const saved = await AsyncStorage.getItem("flappyBirdHighScore");
@@ -109,7 +110,7 @@ const App = () => {
       }
     }
   );
-
+  //READ THE DOCS, MAKES SENSE
   const isPointColliding = (point, rect) => {
     "worklet";
     return (
@@ -124,7 +125,7 @@ const App = () => {
     { x: x.value, y: bottomPipeY.value, w: pipeWidth, h: pipeHeight },
     { x: x.value, y: topPipeY.value, w: pipeWidth, h: pipeHeight },
   ]);
-
+  // THANK GOD FOR THE DOCS
   useAnimatedReaction(
     () => birdY.value,
     () => {
@@ -143,14 +144,14 @@ const App = () => {
       if (isOffscreen || collides) gameOver.value = true;
     }
   );
-
+  //DEATH TIMER
   const startCountdown = () => {
     setCountdown(3);
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          runOnJS(restartGame)(); // Start the game when countdown finishes
+          runOnJS(restartGame)();
           setIsRestarting(false);
           return 0;
         }
@@ -211,7 +212,7 @@ const App = () => {
     gameOver.value = false;
     x.value = width;
     pipeOffset.value = 0;
-    moveMap(); // Restart the pipe movement
+    moveMap();
     setScore(0);
   };
 
@@ -236,7 +237,7 @@ const App = () => {
     birdY.value += (birdYVelocity.value * dt) / 1000;
     birdYVelocity.value += (GRAVITY * dt) / 1000;
   });
-
+  //BG
   const font = matchFont({
     fontFamily: Platform.select({
       ios: "Courier New",
@@ -257,6 +258,7 @@ const App = () => {
     fontWeight: "bold",
   });
 
+  //BIRD
   const birdTransform = useDerivedValue(() => [
     {
       rotate: interpolate(
@@ -272,7 +274,7 @@ const App = () => {
     x: width / 4 + 26,
     y: birdY.value + 20,
   }));
-
+  //PIPES
   return (
     <GestureHandlerRootView>
       <GestureDetector gesture={gesture}>
@@ -293,6 +295,7 @@ const App = () => {
               width={pipeWidth}
               height={pipeHeight}
             />
+
             <SkiaImage
               image={base}
               width={width}
