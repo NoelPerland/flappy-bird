@@ -32,7 +32,7 @@ import {
 
 const GRAVITY = 1000;
 const JUMP_FORCE = -500;
-const PIPE_GAP = 200;
+const PIPE_GAP = 250;
 const pipeWidth = 106;
 const pipeHeight = 640;
 
@@ -40,6 +40,8 @@ const App = () => {
   const { width, height } = useWindowDimensions();
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
+  const [isRestarting, setIsRestarting] = useState(false);
+  const [countdown, setCountdown] = useState(0);
 
   const bg = useImage(require("./assets/sprites/background-day.png"));
   const bird = useImage(require("./assets/sprites/yellowbird-upflap.png"));
@@ -142,6 +144,21 @@ const App = () => {
     }
   );
 
+  const startCountdown = () => {
+    setCountdown(3);
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          runOnJS(restartGame)(); // Start the game when countdown finishes
+          setIsRestarting(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   const showGameOverAlert = () => {
     Alert.alert(
       "Game Over",
@@ -149,11 +166,29 @@ const App = () => {
       [
         {
           text: "Play Again",
-          onPress: () => restartGame(),
+          onPress: () => {
+            setIsRestarting(true);
+            startCountdown();
+          },
         },
         {
           text: "See Highscore",
-          onPress: () => Alert.alert("Highscore", `Your best is ${highScore}`),
+          onPress: () => {
+            Alert.alert(
+              "Highscore",
+              `Your best is ${highScore}`,
+              [
+                {
+                  text: "OK",
+                  onPress: () => {
+                    setIsRestarting(true);
+                    startCountdown();
+                  },
+                },
+              ],
+              { cancelable: false }
+            );
+          },
         },
       ],
       { cancelable: false }
@@ -176,11 +211,19 @@ const App = () => {
     gameOver.value = false;
     x.value = width;
     pipeOffset.value = 0;
-    runOnJS(moveMap)();
+    moveMap(); // Restart the pipe movement
     setScore(0);
   };
 
   const gesture = Gesture.Tap().onStart(() => {
+    if (gameOver.value && !isRestarting) {
+      return;
+    }
+
+    if (isRestarting) {
+      return;
+    }
+
     if (gameOver.value) {
       runOnJS(restartGame)();
     } else {
@@ -201,6 +244,16 @@ const App = () => {
       default: "monospace",
     }),
     fontSize: 48,
+    fontWeight: "bold",
+  });
+
+  const countdownFont = matchFont({
+    fontFamily: Platform.select({
+      ios: "Courier New",
+      android: "monospace",
+      default: "monospace",
+    }),
+    fontSize: 72,
     fontWeight: "bold",
   });
 
@@ -264,6 +317,15 @@ const App = () => {
               font={font}
               color="white"
             />
+            {countdown > 0 && (
+              <Text
+                x={width / 2 - 30}
+                y={height / 2}
+                text={countdown.toString()}
+                font={countdownFont}
+                color="white"
+              />
+            )}
           </Canvas>
         </View>
       </GestureDetector>
